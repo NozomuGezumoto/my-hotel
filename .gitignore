@@ -26,3 +26,17 @@ Thumbs.db
 
 expo-env.d.ts
 # @end expo-cli
+
+# dependencies
+node_modules/
+
+# expo
+.expo/
+.expo-shared/
+
+# builds
+dist/
+build/
+
+# env
+.env*

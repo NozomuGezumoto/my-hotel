@@ -105,6 +105,27 @@ interface StoreState {
   deleteCustomShop: (id: string) => void;
   getCustomShops: () => CustomShop[];
   isCustomShop: (id: string) => boolean;
+
+  // ============================================
+  // Hotel (行った・行きたい・思い出・写真)
+  // ============================================
+  visitedHotels: string[];
+  wantToGoHotels: string[];
+  hotelRatings: Record<string, number>;
+  hotelMemos: { id: string; note: string; photos?: string[]; updatedAt: string }[];
+  markHotelVisited: (id: string) => void;
+  unmarkHotelVisited: (id: string) => void;
+  isHotelVisited: (id: string) => boolean;
+  markHotelWantToGo: (id: string) => void;
+  unmarkHotelWantToGo: (id: string) => void;
+  isHotelWantToGo: (id: string) => boolean;
+  setHotelMemo: (id: string, note: string) => void;
+  getHotelMemo: (id: string) => { note: string; photos: string[] } | undefined;
+  addHotelPhoto: (id: string, photoUri: string) => void;
+  removeHotelPhoto: (id: string, photoUri: string) => void;
+  getHotelPhotos: (id: string) => string[];
+  setHotelRating: (id: string, rating: number) => void;
+  getHotelRating: (id: string) => number | undefined;
 }
 
 export const useStore = create<StoreState>()(
@@ -116,6 +137,10 @@ export const useStore = create<StoreState>()(
       shopMemos: [],
       customShops: [],
       excludedShops: [],
+      visitedHotels: [],
+      wantToGoHotels: [],
+      hotelRatings: {},
+      hotelMemos: [],
       filterMode: 'all',
       distanceFilter: 'none',
       prefectureFilter: '',
@@ -374,8 +399,86 @@ export const useStore = create<StoreState>()(
       },
       
       getCustomShops: () => get().customShops,
-      
+
       isCustomShop: (id) => id.startsWith('custom-'),
+
+      // ============================================
+      // Hotel Actions
+      // ============================================
+      markHotelVisited: (id) => {
+        set((state) => {
+          if (state.visitedHotels.includes(id)) return state;
+          return { visitedHotels: [...state.visitedHotels, id] };
+        });
+      },
+      unmarkHotelVisited: (id) => {
+        set((state) => ({
+          visitedHotels: state.visitedHotels.filter((h) => h !== id),
+        }));
+      },
+      isHotelVisited: (id) => get().visitedHotels.includes(id),
+      markHotelWantToGo: (id) => {
+        set((state) => {
+          if (state.wantToGoHotels.includes(id)) return state;
+          return { wantToGoHotels: [...state.wantToGoHotels, id] };
+        });
+      },
+      unmarkHotelWantToGo: (id) => {
+        set((state) => ({
+          wantToGoHotels: state.wantToGoHotels.filter((h) => h !== id),
+        }));
+      },
+      isHotelWantToGo: (id) => get().wantToGoHotels.includes(id),
+      setHotelMemo: (id, note) => {
+        set((state) => {
+          const existing = state.hotelMemos.find((m) => m.id === id);
+          if (existing) {
+            return {
+              hotelMemos: state.hotelMemos.map((m) =>
+                m.id === id ? { ...m, note, updatedAt: new Date().toISOString() } : m
+              ),
+            };
+          }
+          return {
+            hotelMemos: [...state.hotelMemos, { id, note, updatedAt: new Date().toISOString() }],
+          };
+        });
+      },
+      getHotelMemo: (id) => {
+        const m = get().hotelMemos.find((m) => m.id === id);
+        return m ? { note: m.note, photos: m.photos || [] } : undefined;
+      },
+      addHotelPhoto: (id, photoUri) => {
+        set((state) => {
+          const existing = state.hotelMemos.find((m) => m.id === id);
+          const photos = existing?.photos || [];
+          if (photos.length >= 4) return state;
+          const next = existing
+            ? { ...existing, photos: [...photos, photoUri], updatedAt: new Date().toISOString() }
+            : { id, note: '', photos: [photoUri], updatedAt: new Date().toISOString() };
+          return {
+            hotelMemos: existing
+              ? state.hotelMemos.map((m) => (m.id === id ? next : m))
+              : [...state.hotelMemos, next],
+          };
+        });
+      },
+      removeHotelPhoto: (id, photoUri) => {
+        set((state) => ({
+          hotelMemos: state.hotelMemos.map((m) =>
+            m.id === id
+              ? { ...m, photos: (m.photos || []).filter((p) => p !== photoUri), updatedAt: new Date().toISOString() }
+              : m
+          ),
+        }));
+      },
+      getHotelPhotos: (id) => get().hotelMemos.find((m) => m.id === id)?.photos || [],
+      setHotelRating: (id, rating) => {
+        set((state) => ({
+          hotelRatings: { ...state.hotelRatings, [id]: Math.min(5, Math.max(1, rating)) },
+        }));
+      },
+      getHotelRating: (id) => get().hotelRatings[id],
     }),
     {
       name: 'my-sushi-storage',
@@ -386,6 +489,10 @@ export const useStore = create<StoreState>()(
         shopMemos: state.shopMemos,
         customShops: state.customShops,
         excludedShops: state.excludedShops,
+        visitedHotels: state.visitedHotels,
+        wantToGoHotels: state.wantToGoHotels,
+        hotelRatings: state.hotelRatings,
+        hotelMemos: state.hotelMemos,
       }),
     }
   )

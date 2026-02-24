@@ -261,6 +261,35 @@ Android で地図を表示するには Google Maps API キーが必要です：
 - 📋 タップで店舗詳細を表示（店名、種類、座標）
 - 🎨 寿司をイメージしたオレンジ系テーマ
 
+### 高級ホテルデータ（一泊8万円以上・ローカルJSON）
+
+API 呼び出しを抑えるため、Amadeus で取得した「一泊8万円以上」のホテルは **ローカル JSON に保存** してアプリから読み込みます。
+
+1. **Amadeus API キー**を [Amadeus for Developers](https://developers.amadeus.com/) で取得
+2. 環境変数を設定してスクリプトを **1回だけ** 実行（必要に応じて日付を指定）
+
+```powershell
+# PowerShell
+$env:AMADEUS_CLIENT_ID = "your_api_key"
+$env:AMADEUS_CLIENT_SECRET = "your_api_secret"
+node scripts/fetch_luxury_hotels.js
+```
+
+```powershell
+# 検索日付を指定する場合
+$env:CHECK_IN = "2025-03-01"
+$env:CHECK_OUT = "2025-03-02"
+node scripts/fetch_luxury_hotels.js
+```
+
+3. 出力先
+   - `data/out/luxury_hotels.json`（バックアップ）
+   - `src/data/luxury_hotels.json`（アプリが import するファイル）
+
+4. アプリ側では `getLuxuryHotelPins()`（`src/data/hotelData.ts`）で読み込み。フィルター「一泊8万円以上」はスクリプト側で適用済みです。
+
+対象都市は `scripts/fetch_luxury_hotels.js` の `CITIES` 配列で変更できます（IATA 都市コード: TYO, PAR, NYC など）。
+
 ### ディレクトリ構造（アプリ部分）
 
 ```
@@ -275,10 +304,14 @@ Project_My_Shushi/
 │   │   └── SushiMap.tsx
 │   ├── constants/          # テーマ設定
 │   │   └── theme.ts
-│   ├── data/               # 寿司店データ
-│   │   └── tokyo_sushi.json
+│   ├── data/               # 寿司店データ・ホテルデータ
+│   │   ├── tokyo_sushi.json
+│   │   ├── luxury_hotels.json   # 一泊8万以上（スクリプトで生成）
+│   │   └── hotelData.ts
 │   └── types/              # TypeScript型定義
 │       └── index.ts
+├── scripts/
+│   └── fetch_luxury_hotels.js   # 高級ホテル取得→JSON保存
 ├── assets/images/          # アプリアイコン
 ├── app.json                # Expo設定
 ├── package.json

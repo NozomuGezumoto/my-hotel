@@ -72,6 +72,14 @@ export const JAPAN_INITIAL_REGION = {
   longitudeDelta: 12.0,
 };
 
+// World map (luxury hotels)
+export const WORLD_INITIAL_REGION = {
+  latitude: 25,
+  longitude: 0,
+  latitudeDelta: 100,
+  longitudeDelta: 100,
+};
+
 export const PIN_SIZE = {
   marker: 44,
   cluster: 48,

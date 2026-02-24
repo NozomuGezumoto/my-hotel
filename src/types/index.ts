@@ -54,3 +54,31 @@ export const PREFECTURES = [
 ] as const;
 
 export type Prefecture = typeof PREFECTURES[number];
+
+// ============================================
+// Luxury Hotel (local JSON from Amadeus fetch)
+// Filter: 一泊8万円以上
+// ============================================
+
+export interface HotelPin {
+  id: string;           // Amadeus hotelId
+  lat: number;
+  lng: number;
+  name: string;
+  pricePerNight: number;  // 円
+  currency: string;
+  address: string;
+  countryCode: string;
+  cityName: string;
+  checkIn?: string;    // 検索に使った日付
+  checkOut?: string;
+}
+
+/** JSON saved by scripts/fetch_luxury_hotels.js */
+export interface LuxuryHotelsJson {
+  generatedAt: string;   // ISO date
+  checkIn: string;       // YYYY-MM-DD
+  checkOut: string;
+  minPricePerNightYen: number;
+  hotels: HotelPin[];
+}
