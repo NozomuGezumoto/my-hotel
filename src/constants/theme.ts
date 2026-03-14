@@ -1,5 +1,5 @@
 // ============================================
-// My Sushi - Theme Configuration
+// My Luxury Hotel - Theme Configuration
 // Modern Japanese-inspired palette
 // ============================================
 
@@ -45,6 +45,17 @@ export const SUSHI_COLORS = {
   // Borders
   border: 'rgba(0, 0, 0, 0.08)',
   borderLight: 'rgba(0, 0, 0, 0.04)',
+
+  // Title tiers (称号)
+  titleMaster: '#b8860b',   // ダークゴールド
+  titleTraveler: '#5f6a72', // シルバー・スレート
+  titleExplorer: '#a0522d', // ブロンズ・シェンナ
+
+  // Dream (Luxury) - gold, dark blue, white
+  dreamGold: '#c9a227',
+  dreamGoldLight: '#e8d48b',
+  dreamDarkBlue: '#1a237e',
+  dreamWhite: '#ffffff',
 };
 
 export const TOKYO_CENTER = {
@@ -113,6 +124,20 @@ export const SHADOWS = {
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
+    elevation: 4,
+  },
+  lg: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  card: {
+    shadowColor: '#2d4373',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 4,
   },
 };

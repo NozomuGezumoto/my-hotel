@@ -1,11 +1,13 @@
 // ============================================
-// My Sushi - State Management
+// My Luxury Hotel - State Management
 // Using Zustand with AsyncStorage persistence
 // ============================================
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { HotelUserState } from '../types';
+import { getTestSeedVisitedHotelIds } from '../data/hotelData';
 
 export interface VisitedShop {
   id: string;          // OSM ID
@@ -107,18 +109,37 @@ interface StoreState {
   isCustomShop: (id: string) => boolean;
 
   // ============================================
-  // Hotel (行った・行きたい・思い出・写真)
+  // Hotel (行った・行きたい・Dream・Stay Record)
   // ============================================
   visitedHotels: string[];
   wantToGoHotels: string[];
+  hotelDeadlines: Record<string, string>;      // hotelId -> ISO date
+  hotelSavingGoals: Record<string, number>;
+  hotelSavedAmounts: Record<string, number>;
+  hotelVisitedDates: Record<string, string>;   // hotelId -> ISO date
   hotelRatings: Record<string, number>;
   hotelMemos: { id: string; note: string; photos?: string[]; updatedAt: string }[];
+  /** Dream ページ用：ホテルごと1枚の励み画像（hotelId -> image URI） */
+  dreamHotelImages: Record<string, string>;
+  /** Dream に登録していたが「行った」にしたホテルID（Achieved dreams 欄用） */
+  dreamVisitedHotelIds: string[];
+  /** 夢に追加した日（hotelId -> YYYY-MM-DD）登録日表示用 */
+  dreamAddedDates: Record<string, string>;
   markHotelVisited: (id: string) => void;
   unmarkHotelVisited: (id: string) => void;
   isHotelVisited: (id: string) => boolean;
+  setHotelVisitedDate: (id: string, date: string | undefined) => void;
+  getHotelVisitedDate: (id: string) => string | undefined;
   markHotelWantToGo: (id: string) => void;
   unmarkHotelWantToGo: (id: string) => void;
   isHotelWantToGo: (id: string) => boolean;
+  setHotelDeadline: (id: string, deadline: string | undefined) => void;
+  setHotelSavingGoal: (id: string, value: number | undefined) => void;
+  setHotelSavedAmount: (id: string, value: number | undefined) => void;
+  getHotelDeadline: (id: string) => string | undefined;
+  getHotelSavingGoal: (id: string) => number | undefined;
+  getHotelSavedAmount: (id: string) => number | undefined;
+  getHotelUserState: (id: string) => HotelUserState;
   setHotelMemo: (id: string, note: string) => void;
   getHotelMemo: (id: string) => { note: string; photos: string[] } | undefined;
   addHotelPhoto: (id: string, photoUri: string) => void;
@@ -126,6 +147,9 @@ interface StoreState {
   getHotelPhotos: (id: string) => string[];
   setHotelRating: (id: string, rating: number) => void;
   getHotelRating: (id: string) => number | undefined;
+  setDreamHotelImage: (id: string, uri: string | undefined) => void;
+  getDreamHotelImage: (id: string) => string | undefined;
+  getDreamAddedDate: (id: string) => string | undefined;
 }
 
 export const useStore = create<StoreState>()(
@@ -137,10 +161,18 @@ export const useStore = create<StoreState>()(
       shopMemos: [],
       customShops: [],
       excludedShops: [],
-      visitedHotels: [],
+      // テスト用：日本＋Four Seasons をマックス達成した初期値。通常運用時は getTestSeedVisitedHotelIds() を [] に差し替えるか削除
+      visitedHotels: getTestSeedVisitedHotelIds(),
       wantToGoHotels: [],
+      hotelDeadlines: {},
+      hotelSavingGoals: {},
+      hotelSavedAmounts: {},
+      hotelVisitedDates: {},
       hotelRatings: {},
       hotelMemos: [],
+      dreamHotelImages: {},
+      dreamVisitedHotelIds: [],
+      dreamAddedDates: {},
       filterMode: 'all',
       distanceFilter: 'none',
       prefectureFilter: '',
@@ -408,7 +440,19 @@ export const useStore = create<StoreState>()(
       markHotelVisited: (id) => {
         set((state) => {
           if (state.visitedHotels.includes(id)) return state;
-          return { visitedHotels: [...state.visitedHotels, id] };
+          const wasDream = state.wantToGoHotels.includes(id);
+          const today = new Date().toISOString().split('T')[0];
+          const hasDate = state.hotelVisitedDates[id];
+          return {
+            visitedHotels: [...state.visitedHotels, id],
+            wantToGoHotels: state.wantToGoHotels.filter((h) => h !== id),
+            ...(wasDream && !state.dreamVisitedHotelIds.includes(id)
+              ? { dreamVisitedHotelIds: [...state.dreamVisitedHotelIds, id] }
+              : {}),
+            ...(!hasDate
+              ? { hotelVisitedDates: { ...state.hotelVisitedDates, [id]: today } }
+              : {}),
+          };
         });
       },
       unmarkHotelVisited: (id) => {
@@ -417,10 +461,25 @@ export const useStore = create<StoreState>()(
         }));
       },
       isHotelVisited: (id) => get().visitedHotels.includes(id),
+      setHotelVisitedDate: (id, date) => {
+        set((state) => {
+          if (date == null || date === '') {
+            const { [id]: _, ...rest } = state.hotelVisitedDates;
+            return { hotelVisitedDates: rest };
+          }
+          return { hotelVisitedDates: { ...state.hotelVisitedDates, [id]: date } };
+        });
+      },
+      getHotelVisitedDate: (id) => get().hotelVisitedDates[id],
       markHotelWantToGo: (id) => {
         set((state) => {
           if (state.wantToGoHotels.includes(id)) return state;
-          return { wantToGoHotels: [...state.wantToGoHotels, id] };
+          const today = new Date().toISOString().split('T')[0];
+          const hasAddedDate = state.dreamAddedDates[id];
+          return {
+            wantToGoHotels: [...state.wantToGoHotels, id],
+            ...(!hasAddedDate ? { dreamAddedDates: { ...state.dreamAddedDates, [id]: today } } : {}),
+          };
         });
       },
       unmarkHotelWantToGo: (id) => {
@@ -429,6 +488,45 @@ export const useStore = create<StoreState>()(
         }));
       },
       isHotelWantToGo: (id) => get().wantToGoHotels.includes(id),
+      setHotelDeadline: (id, deadline) => {
+        set((state) => {
+          if (deadline == null || deadline === '') {
+            const { [id]: _, ...rest } = state.hotelDeadlines;
+            return { hotelDeadlines: rest };
+          }
+          return { hotelDeadlines: { ...state.hotelDeadlines, [id]: deadline } };
+        });
+      },
+      setHotelSavingGoal: (id, value) => {
+        set((state) => {
+          if (value == null || (typeof value === 'number' && Number.isNaN(value))) {
+            const { [id]: _, ...rest } = state.hotelSavingGoals;
+            return { hotelSavingGoals: rest };
+          }
+          return { hotelSavingGoals: { ...state.hotelSavingGoals, [id]: value } };
+        });
+      },
+      setHotelSavedAmount: (id, value) => {
+        set((state) => {
+          if (value == null || (typeof value === 'number' && Number.isNaN(value))) {
+            const { [id]: _, ...rest } = state.hotelSavedAmounts;
+            return { hotelSavedAmounts: rest };
+          }
+          return { hotelSavedAmounts: { ...state.hotelSavedAmounts, [id]: value } };
+        });
+      },
+      getHotelDeadline: (id) => get().hotelDeadlines[id],
+      getHotelSavingGoal: (id) => get().hotelSavingGoals[id],
+      getHotelSavedAmount: (id) => get().hotelSavedAmounts[id],
+      getHotelUserState: (id) => ({
+        hotelId: id,
+        isDream: get().wantToGoHotels.includes(id),
+        isVisited: get().visitedHotels.includes(id),
+        deadline: get().hotelDeadlines[id],
+        savingGoal: get().hotelSavingGoals[id],
+        savedAmount: get().hotelSavedAmounts[id],
+        visitedDate: get().hotelVisitedDates[id],
+      }),
       setHotelMemo: (id, note) => {
         set((state) => {
           const existing = state.hotelMemos.find((m) => m.id === id);
@@ -479,6 +577,17 @@ export const useStore = create<StoreState>()(
         }));
       },
       getHotelRating: (id) => get().hotelRatings[id],
+      setDreamHotelImage: (id, uri) => {
+        set((state) => {
+          if (uri == null || uri === '') {
+            const { [id]: _, ...rest } = state.dreamHotelImages;
+            return { dreamHotelImages: rest };
+          }
+          return { dreamHotelImages: { ...state.dreamHotelImages, [id]: uri } };
+        });
+      },
+      getDreamHotelImage: (id) => get().dreamHotelImages[id],
+      getDreamAddedDate: (id) => get().dreamAddedDates[id],
     }),
     {
       name: 'my-sushi-storage',
@@ -491,8 +600,15 @@ export const useStore = create<StoreState>()(
         excludedShops: state.excludedShops,
         visitedHotels: state.visitedHotels,
         wantToGoHotels: state.wantToGoHotels,
+        hotelDeadlines: state.hotelDeadlines,
+        hotelSavingGoals: state.hotelSavingGoals,
+        hotelSavedAmounts: state.hotelSavedAmounts,
+        hotelVisitedDates: state.hotelVisitedDates,
         hotelRatings: state.hotelRatings,
         hotelMemos: state.hotelMemos,
+        dreamHotelImages: state.dreamHotelImages,
+        dreamVisitedHotelIds: state.dreamVisitedHotelIds,
+        dreamAddedDates: state.dreamAddedDates,
       }),
     }
   )

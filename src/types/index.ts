@@ -72,6 +72,34 @@ export interface HotelPin {
   cityName: string;
   checkIn?: string;    // 検索に使った日付
   checkOut?: string;
+  /** ブランド名（未設定時は名前から導出） */
+  brand?: string;
+  /** 概要・説明 */
+  description?: string;
+  /** 画像URL */
+  image?: string;
+}
+
+/** ホテルごとのユーザー状態（Dream / Stay Record） */
+export interface HotelUserState {
+  hotelId: string;
+  isDream: boolean;
+  isVisited: boolean;
+  deadline?: string;     // ISO date (YYYY-MM-DD)
+  savingGoal?: number;
+  savedAmount?: number;
+  visitedDate?: string;  // ISO date
+}
+
+/**
+ * Dream Hotel - 泊まりたいホテル（goalPrice は hotel.pricePerNight を使用）
+ * 永続化は store の wantToGoHotels + hotelSavedAmounts, hotelDeadlines, hotelSavingGoals で行う。
+ */
+export interface DreamHotel {
+  hotelId: string;
+  savedAmount: number;
+  goalPrice: number;
+  deadline: string;      // YYYY-MM-DD
 }
 
 /** JSON saved by scripts/fetch_luxury_hotels.js */

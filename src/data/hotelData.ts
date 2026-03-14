@@ -32,9 +32,9 @@ export const REGION_NAMES_EN: Record<RegionId, string> = {
 
 /** 地域 → 国コードのリスト */
 export const REGION_COUNTRIES: Record<RegionId, string[]> = {
-  asia: ['JP', 'TH', 'SG', 'HK', 'AE', 'IN'],
-  europe: ['FR', 'GB', 'IT', 'ES', 'AT', 'DE', 'NL', 'CH'],
-  americas: ['US'],
+  asia: ['JP', 'TH', 'SG', 'HK', 'AE', 'IN', 'ID', 'CN', 'MV', 'LK'],
+  europe: ['FR', 'GB', 'IT', 'ES', 'AT', 'DE', 'NL', 'CH', 'PT', 'RU', 'HU'],
+  americas: ['US', 'CA', 'PE'],
   oceania: ['AU'],
   africa: ['ZA'],
 };
@@ -76,6 +76,15 @@ export const COUNTRY_NAMES: Record<string, string> = {
   AU: 'オーストラリア',
   ZA: '南アフリカ',
   IN: 'インド',
+  ID: 'インドネシア',
+  PT: 'ポルトガル',
+  MV: 'モルディブ',
+  CN: '中国',
+  RU: 'ロシア',
+  LK: 'スリランカ',
+  PE: 'ペルー',
+  CA: 'カナダ',
+  HU: 'ハンガリー',
 };
 
 export const COUNTRY_NAMES_EN: Record<string, string> = {
@@ -96,6 +105,15 @@ export const COUNTRY_NAMES_EN: Record<string, string> = {
   AU: 'Australia',
   ZA: 'South Africa',
   IN: 'India',
+  ID: 'Indonesia',
+  PT: 'Portugal',
+  MV: 'Maldives',
+  CN: 'China',
+  RU: 'Russia',
+  LK: 'Sri Lanka',
+  PE: 'Peru',
+  CA: 'Canada',
+  HU: 'Hungary',
 };
 
 /** 日本の cityName → 都道府県 */
@@ -210,6 +228,89 @@ export function getCountryDisplayName(code: string, locale: AppLocale = 'ja'): s
 }
 
 /**
+ * 達成対象とするブランド（この15のみ）
+ */
+export const COMPLETION_BRANDS = [
+  'Aman',
+  'Four Seasons',
+  'Ritz-Carlton',
+  'Mandarin Oriental',
+  'Peninsula',
+  'Rosewood',
+  'St. Regis',
+  'Park Hyatt',
+  'Six Senses',
+  'Bulgari Hotels',
+  'Belmond',
+  'Raffles',
+  'Fairmont',
+  'Kempinski',
+  'Dorchester Collection',
+] as const;
+
+export type CompletionBrand = (typeof COMPLETION_BRANDS)[number];
+
+/** ホテル名のパターン → 達成ブランド名（COMPLETION_BRANDS のいずれか） */
+const NAME_TO_BRAND: Array<{ pattern: RegExp | string; brand: CompletionBrand }> = [
+  { pattern: /^Aman\s/i, brand: 'Aman' },
+  { pattern: /アマン|Aman\s/i, brand: 'Aman' },
+  { pattern: /^Four Seasons\s/i, brand: 'Four Seasons' },
+  { pattern: /四季/, brand: 'Four Seasons' },
+  { pattern: /^Ritz-Carlton\s/i, brand: 'Ritz-Carlton' },
+  { pattern: /^The Ritz\s/i, brand: 'Ritz-Carlton' },
+  { pattern: /^Ritz Paris$/i, brand: 'Ritz-Carlton' },
+  { pattern: /リッツ・カールトン|リッツカールトン/, brand: 'Ritz-Carlton' },
+  { pattern: /^Mandarin Oriental\s/i, brand: 'Mandarin Oriental' },
+  { pattern: /^The Peninsula\s/i, brand: 'Peninsula' },
+  { pattern: /^Peninsula\s/i, brand: 'Peninsula' },
+  { pattern: /ペニンシュラ/, brand: 'Peninsula' },
+  { pattern: /^Rosewood\s/i, brand: 'Rosewood' },
+  { pattern: /^The St\.?\s*Regis\s/i, brand: 'St. Regis' },
+  { pattern: /^St\.?\s*Regis\s/i, brand: 'St. Regis' },
+  { pattern: /^Park Hyatt\s/i, brand: 'Park Hyatt' },
+  { pattern: /パーク\s*ハイアット|パークハイアット/, brand: 'Park Hyatt' },
+  { pattern: /^Six Senses\s/i, brand: 'Six Senses' },
+  { pattern: /Bulgari\s+Hotel/i, brand: 'Bulgari Hotels' },
+  { pattern: /^Bulgari\s/i, brand: 'Bulgari Hotels' },
+  { pattern: /^Belmond\s/i, brand: 'Belmond' },
+  { pattern: /^Raffles\s/i, brand: 'Raffles' },
+  { pattern: /^Fairmont\s/i, brand: 'Fairmont' },
+  { pattern: /Kempinski/i, brand: 'Kempinski' },
+  { pattern: /Dorchester Collection/i, brand: 'Dorchester Collection' },
+  { pattern: /^The Dorchester$/i, brand: 'Dorchester Collection' },
+  { pattern: /45 Park Lane|Coworth Park/i, brand: 'Dorchester Collection' },
+  { pattern: /Hotel Bel-Air|Le Meurice/i, brand: 'Dorchester Collection' },
+  { pattern: /^The Savoy$/i, brand: 'Fairmont' },
+];
+
+/**
+ * ホテル名からブランドを導出（達成対象15ブランドのみ。それ以外は Other）
+ */
+export function getBrandForHotel(hotel: HotelPin): string {
+  if (hotel.brand && hotel.brand.trim()) {
+    const b = hotel.brand.trim();
+    const found = COMPLETION_BRANDS.find(
+      (cb) => cb.toLowerCase() === b.toLowerCase() || b.startsWith(cb)
+    );
+    if (found) return found;
+    const byPattern = NAME_TO_BRAND.find(({ pattern }) =>
+      typeof pattern === 'string' ? b.includes(pattern) : pattern.test(b)
+    );
+    if (byPattern) return byPattern.brand;
+    return 'Other';
+  }
+  const name = hotel.name || '';
+  for (const { pattern, brand } of NAME_TO_BRAND) {
+    if (typeof pattern === 'string') {
+      if (name.includes(pattern)) return brand;
+    } else if (pattern.test(name)) {
+      return brand;
+    }
+  }
+  return 'Other';
+}
+
+/**
  * ローカル JSON から一泊8万円以上のホテル一覧を取得
  */
 export function getLuxuryHotelPins(): HotelPin[] {
@@ -231,4 +332,17 @@ export function getLuxuryHotelsMeta(): {
     checkOut: data.checkOut ?? '',
     minPricePerNightYen: data.minPricePerNightYen ?? 80000,
   };
+}
+
+/**
+ * テスト用：日本（JP）＋ Four Seasons を全達成した状態で使う visited ホテルID一覧。
+ * ストアの初期値で使用。本番では空配列に戻すか、別フラグで切り替える。
+ */
+export function getTestSeedVisitedHotelIds(): string[] {
+  const pins = getLuxuryHotelPins();
+  const japanIds = pins.filter((p) => p.countryCode === 'JP').map((p) => p.id);
+  const fourSeasonsIds = pins
+    .filter((p) => getBrandForHotel(p) === 'Four Seasons')
+    .map((p) => p.id);
+  return [...new Set([...japanIds, ...fourSeasonsIds])];
 }

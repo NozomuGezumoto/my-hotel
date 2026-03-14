@@ -388,7 +388,10 @@ export default function HotelMapWeb() {
         handleIndicatorStyle={styles.sheetIndicator}
         animateOnMount={false}
       >
-        <BottomSheetScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <BottomSheetScrollView
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+          keyboardShouldPersistTaps="handled"
+        >
           {selectedHotel && (
             <HotelDetail hotel={selectedHotel} onClose={handleCloseDetail} />
           )}

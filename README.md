@@ -1,4 +1,4 @@
-# Project My Sushi 🍣
+# Project My Luxury Hotel
 
 OSM (OpenStreetMap) から日本全国の寿司店データを抽出し、GeoJSON として出力するツールです。  
 React Native の地図アプリなどで使用できる形式で出力します。
@@ -211,7 +211,7 @@ Invoke-WebRequest -Uri "https://download.geofabrik.de/asia/japan-latest.osm.pbf"
 2. 都道府県フィルタ（`-Pref`）で分割処理
 3. 不要なアプリケーションを終了
 
-## React Native アプリ（My Sushi）
+## React Native アプリ（My Luxury Hotel）
 
 このプロジェクトには、寿司店を地図上に表示する React Native (Expo) アプリが含まれています。
 

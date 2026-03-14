@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "My Sushi",
-    "slug": "my-sushi",
+    "name": "My Luxury Hotel",
+    "slug": "my-luxury-hotel",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mysushi",
+    "scheme": "myluxuryhotel",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -15,14 +15,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.mysushi.app"
+      "bundleIdentifier": "com.myluxuryhotel.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#f97316"
       },
-      "package": "com.mysushi.app",
+      "package": "com.myluxuryhotel.app",
       "config": {
         "googleMaps": {
           "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"

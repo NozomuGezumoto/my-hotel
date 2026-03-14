@@ -15,6 +15,7 @@ import {
   WORLD_INITIAL_REGION,
   PIN_SIZE,
   SPACING,
+  RADIUS,
 } from '../constants/theme';
 import type { HotelPin } from '../types';
 import {
@@ -347,7 +348,7 @@ export default function HotelMap() {
                     pinKind === 'visited'
                       ? 'checkmark-circle'
                       : pinKind === 'wantToGo'
-                        ? 'heart'
+                        ? 'star'
                         : 'bed'
                   }
                   size={24}
@@ -530,7 +531,10 @@ export default function HotelMap() {
         handleIndicatorStyle={styles.sheetIndicator}
         animateOnMount={false}
       >
-        <BottomSheetScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <BottomSheetScrollView
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+          keyboardShouldPersistTaps="handled"
+        >
           {selectedHotel && (
             <HotelDetail hotel={selectedHotel} onClose={handleCloseDetail} />
           )}
@@ -589,8 +593,8 @@ const styles = StyleSheet.create({
     borderColor: '#248f6a',
   },
   hotelPinWantToGo: {
-    backgroundColor: SUSHI_COLORS.accent,
-    borderColor: '#d14a62',
+    backgroundColor: SUSHI_COLORS.dreamGold,
+    borderColor: '#a68522',
   },
   clusterContainer: {
     width: PIN_SIZE.cluster,
