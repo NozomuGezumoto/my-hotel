@@ -15,7 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.myluxuryhotel.app"
+      "bundleIdentifier": "com.myluxuryhotel.app",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "This app allows you to select hotel photos from your photo library and attach them to your personal hotel records, such as visited hotels, notes, and ratings."
+      }
     },
     "android": {
       "adaptiveIcon": {
