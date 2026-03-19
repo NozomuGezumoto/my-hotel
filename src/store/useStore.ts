@@ -7,7 +7,6 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { HotelUserState } from '../types';
-import { getTestSeedVisitedHotelIds } from '../data/hotelData';
 
 export interface VisitedShop {
   id: string;          // OSM ID
@@ -161,8 +160,7 @@ export const useStore = create<StoreState>()(
       shopMemos: [],
       customShops: [],
       excludedShops: [],
-      // テスト用：日本＋Four Seasons をマックス達成した初期値。通常運用時は getTestSeedVisitedHotelIds() を [] に差し替えるか削除
-      visitedHotels: getTestSeedVisitedHotelIds(),
+      visitedHotels: [],
       wantToGoHotels: [],
       hotelDeadlines: {},
       hotelSavingGoals: {},
